@@ -1047,7 +1047,7 @@ import Header from "./component/Header";
 import Sidebar from "./component/Sidebar";
 import ChatArea from "./component/ChatArea";
 
-const socket = io("http://localhost:4000");
+const socket = io("https://app-backend-1naq.onrender.com");
 
 export default function ChatPage() {
   const [message, setMessage] = useState("");
@@ -1077,7 +1077,7 @@ export default function ChatPage() {
   // Handle logout
   const handleLogout = async () => {
   try {
-    const res = await fetch("http://localhost:4000/api/auth/logout", {
+    const res = await fetch("https://app-backend-1naq.onrender.com/api/auth/logout", {
       method: "POST",
       credentials: "include", // Important to include cookies
     });
@@ -1110,7 +1110,7 @@ export default function ChatPage() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch("http://localhost:4000/api/users");
+        const res = await fetch("https://app-backend-1naq.onrender.com/api/users");
         if (!res.ok) throw new Error("Failed to fetch users");
         const data = await res.json();
         setAllUsers(data.filter((u) => u !== username));
@@ -1125,7 +1125,7 @@ export default function ChatPage() {
   useEffect(() => {
     const fetchGroups = async () => {
       try {
-        const res = await fetch("http://localhost:4000/api/groups");
+        const res = await fetch("https://app-backend-1naq.onrender.com/api/groups");
         if (!res.ok) throw new Error("Failed to fetch groups");
         const data = await res.json();
         setGroups(data.filter((g) => g.members.includes(username)));
@@ -1436,7 +1436,7 @@ export default function ChatPage() {
   if (window.innerWidth < 768) setShowSidebar(false);
 
   try {
-    const res = await fetch(`http://localhost:4000/api/messages/${username}/${user}`);
+    const res = await fetch(`https://app-backend-1naq.onrender.com/api/messages/${username}/${user}`);
     if (!res.ok) throw new Error("Failed to fetch messages");
     const data = await res.json();
     setMessages(data);
