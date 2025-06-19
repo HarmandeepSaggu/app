@@ -1,54 +1,6 @@
 import React from 'react';
-
-// Mock components for demonstration
-const ManageGroupModal = ({ receiver, allUsers, activeGroupMembers, activeGroupAdmins, username, addMember, removeMember, assignAdmin, removeAdmin, setShowManageGroup }) => (
-  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
-      <h3 className="text-xl font-semibold text-gray-900 mb-4">Manage Group</h3>
-      <p className="text-gray-600 mb-4">Group management features would go here.</p>
-      <button 
-        onClick={() => setShowManageGroup(false)}
-        className="w-full px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
-      >
-        Close
-      </button>
-    </div>
-  </div>
-);
-
-const MessageInput = ({ message, setMessage, handleTyping, sendMessage }) => (
-  <div className="p-4 bg-white border-t border-gray-100">
-    <div className="flex items-end space-x-3">
-      <div className="flex-1 relative">
-        <input
-          type="text"
-          value={message}
-          onChange={(e) => {
-            setMessage(e.target.value);
-            handleTyping();
-          }}
-          onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-          placeholder="Type a message..."
-          className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all"
-        />
-        <button className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-600 transition-colors">
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-          </svg>
-        </button>
-      </div>
-      <button
-        onClick={sendMessage}
-        className="p-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-        disabled={!message.trim()}
-      >
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-        </svg>
-      </button>
-    </div>
-  </div>
-);
+import ManageGroupModal from './ManageGroupModal';
+import MessageInput from './MessageInput';
 
 // Enhanced Icon Components with better styling
 const BackIcon = ({ className = "h-6 w-6" }) => (
