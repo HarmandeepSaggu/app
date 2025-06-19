@@ -7,32 +7,63 @@ import ChatArea from "./component/ChatArea";
 import MessageInput from "./component/MessageInput";
 import ManageGroupModal from "./component/ManageGroupModal";
 
+// Initialize socket connection
 const socket = io("https://app-backend-1naq.onrender.com");
 
-export default function ChatPage() {
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState([]);
-  const [groupMessages, setGroupMessages] = useState({});
-  const [allUsers, setAllUsers] = useState([]);
-  const [username, setUsername] = useState("");
-  const [receiver, setReceiver] = useState("");
-  const [mode, setMode] = useState("private");
-  const [groupMembers, setGroupMembers] = useState([]);
-  const [groupName, setGroupName] = useState("");
-  const [groups, setGroups] = useState([]);
-  const [activeGroupMembers, setActiveGroupMembers] = useState([]);
-  const [activeGroupAdmins, setActiveGroupAdmins] = useState([]);
-  const [showSidebar, setShowSidebar] = useState(true);
-  const [showCreateGroup, setShowCreateGroup] = useState(false);
-  const [showManageGroup, setShowManageGroup] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [typingUsers, setTypingUsers] = useState({});
-  const [unreadCounts, setUnreadCounts] = useState({});
-  const [onlineStatus, setOnlineStatus] = useState({});
-  const typingTimeoutRef = useRef(null);
-  const messagesEndRef = useRef(null);
-  const viewedMessagesRef = useRef(new Set());
+// Define TypeScript interfaces for type safety
+interface Message {
+  sender: string;
+  message: string;
+  timestamp: Date | string;
+  id: string;
+  seen: boolean;
+  seenBy?: string[];
+}
 
+interface Group {
+  name: string;
+  members: string[];
+  admins: string[];
+}
+
+interface OnlineStatus {
+  [username: string]: { isOnline: boolean; lastSeen: Date | null };
+}
+
+interface TypingUsers {
+  [username: string]: string;
+}
+
+interface UnreadCounts {
+  [key: string]: number;
+}
+
+export default function ChatPage() {
+  // State with TypeScript types
+  const [message, setMessage] = useState<string>("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [groupMessages, setGroupMessages] = useState<{ [group: string]: Message[] }>({});
+  const [allUsers, setAllUsers] = useState<string[]>([]);
+  const [username, setUsername] = useState<string>("");
+  const [receiver, setReceiver] = useState<string>("");
+  const [mode, setMode] = useState<"private" | "group">("private");
+  const [groupMembers, setGroupMembers] = useState<string[]>([]);
+  const [groupName, setGroupName] = useState<string>("");
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [activeGroupMembers, setActiveGroupMembers] = useState<string[]>([]);
+  const [activeGroupAdmins, setActiveGroupAdmins] = useState<string[]>([]);
+  const [showSidebar, setShowSidebar] = useState<boolean>(true);
+  const [showCreateGroup, setShowCreateGroup] = useState<boolean>(false);
+  const [showManageGroup, setShowManageGroup] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [typingUsers, setTypingUsers] = useState<TypingUsers>({});
+  const [unreadCounts, setUnreadCounts] = useState<UnreadCounts>({});
+  const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>({});
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const viewedMessagesRef = useRef<Set<string>>(new Set());
+
+  // Handle user join on mount
   useEffect(() => {
     const savedUser = localStorage.getItem("username");
     if (!savedUser) return;
@@ -40,12 +71,13 @@ export default function ChatPage() {
     socket.emit("join", savedUser);
   }, []);
 
+  // Fetch all users
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const res = await fetch("https://app-backend-1naq.onrender.com/api/users");
         if (!res.ok) throw new Error("Failed to fetch users");
-        const data = await res.json();
+        const data: string[] = await res.json();
         setAllUsers(data.filter((u) => u !== username));
       } catch (err) {
         console.error("Failed to load users", err);
@@ -57,11 +89,12 @@ export default function ChatPage() {
     }
   }, [username]);
 
+  // Fetch user groups
   useEffect(() => {
     const fetchGroups = async () => {
       try {
         const res = await fetch("https://app-backend-1naq.onrender.com/api/groups");
-        const data = await res.json();
+        const data: Group[] = await res.json();
         const userGroups = data.filter((g) => g.members.includes(username));
         setGroups(userGroups);
       } catch (err) {
@@ -74,8 +107,9 @@ export default function ChatPage() {
     }
   }, [username]);
 
+  // Handle online status updates
   useEffect(() => {
-    const handleOnlineStatus = ({ username, isOnline, lastSeen }) => {
+    const handleOnlineStatus = ({ username, isOnline, lastSeen }: { username: string; isOnline: boolean; lastSeen?: string }) => {
       setOnlineStatus((prev) => ({
         ...prev,
         [username]: { isOnline, lastSeen: lastSeen ? new Date(lastSeen) : null },
@@ -85,10 +119,11 @@ export default function ChatPage() {
     return () => socket.off("online_status", handleOnlineStatus);
   }, []);
 
+  // Update online status for all users
   useEffect(() => {
-    const handleUsers = (onlineUsers) => {
+    const handleUsers = (onlineUsers: string[]) => {
       setOnlineStatus((prev) => {
-        const updatedStatus = { ...prev };
+        const updatedStatus: OnlineStatus = { ...prev };
         allUsers.forEach((user) => {
           if (!updatedStatus[user]) {
             updatedStatus[user] = { isOnline: false, lastSeen: null };
@@ -102,8 +137,9 @@ export default function ChatPage() {
     return () => socket.off("users", handleUsers);
   }, [allUsers]);
 
+  // Handle incoming private messages
   useEffect(() => {
-    const handlePrivate = ({ from, message, timestamp, id, seen }) => {
+    const handlePrivate = ({ from, message, timestamp, id, seen }: Message) => {
       if (receiver === from && mode === "private") {
         setMessages((prev) => [...prev, { sender: from, message, timestamp, id, seen }]);
         if (!seen && !viewedMessagesRef.current.has(id)) {
@@ -121,8 +157,9 @@ export default function ChatPage() {
     return () => socket.off("private_message", handlePrivate);
   }, [receiver, mode]);
 
+  // Handle sent private messages
   useEffect(() => {
-    const handlePrivateSent = ({ to, message, timestamp, id, seen }) => {
+    const handlePrivateSent = ({ to, message, timestamp, id, seen }: Message) => {
       if (receiver === to && mode === "private") {
         setMessages((prev) => [...prev, { sender: "You", message, timestamp, id, seen }]);
       }
@@ -131,8 +168,9 @@ export default function ChatPage() {
     return () => socket.off("private_message_sent", handlePrivateSent);
   }, [receiver, mode]);
 
+  // Handle private message seen status
   useEffect(() => {
-    const handleMessageSeen = ({ messageId, seen }) => {
+    const handleMessageSeen = ({ messageId, seen }: { messageId: string; seen: boolean }) => {
       setMessages((prev) =>
         prev.map((msg) => (msg.id === messageId ? { ...msg, seen } : msg))
       );
@@ -141,8 +179,9 @@ export default function ChatPage() {
     return () => socket.off("message_seen", handleMessageSeen);
   }, []);
 
+  // Handle incoming group messages
   useEffect(() => {
-    const handleGroupMsg = ({ group, message, from, timestamp, id, seen }) => {
+    const handleGroupMsg = ({ group, message, from, timestamp, id, seen }: { group: string } & Message) => {
       if (receiver === group && mode === "group") {
         setGroupMessages((prev) => ({
           ...prev,
@@ -163,8 +202,9 @@ export default function ChatPage() {
     return () => socket.off("group_message", handleGroupMsg);
   }, [receiver, mode]);
 
+  // Handle group message seen status
   useEffect(() => {
-    const handleGroupMessageSeen = ({ messageId, seen, seenBy }) => {
+    const handleGroupMessageSeen = ({ messageId, seen, seenBy }: { messageId: string; seen: boolean; seenBy?: string[] }) => {
       setGroupMessages((prev) => ({
         ...prev,
         [receiver]: (prev[receiver] || []).map((msg) =>
@@ -176,8 +216,9 @@ export default function ChatPage() {
     return () => socket.off("group_message_seen", handleGroupMessageSeen);
   }, [receiver]);
 
+  // Handle group creation
   useEffect(() => {
-    const handleGroupCreated = ({ name, members, admins }) => {
+    const handleGroupCreated = ({ name, members, admins }: Group) => {
       if (members.includes(username)) {
         setGroups((prev) => {
           const alreadyExists = prev.some((g) => g.name === name);
@@ -190,6 +231,7 @@ export default function ChatPage() {
     return () => socket.off("group_created", handleGroupCreated);
   }, [username]);
 
+  // Handle group updates
   useEffect(() => {
     const handleGroupUpdated = ({
       name,
@@ -200,7 +242,7 @@ export default function ChatPage() {
       removed,
       newAdmin,
       removedAdmin,
-    }) => {
+    }: Group & { left?: string; added?: string; removed?: string; newAdmin?: string; removedAdmin?: string }) => {
       if (members) {
         setGroups((prev) =>
           prev.map((g) => (g.name === name ? { ...g, members, admins } : g))
@@ -243,8 +285,9 @@ export default function ChatPage() {
     return () => socket.off("group_updated", handleGroupUpdated);
   }, [username, receiver, mode]);
 
+  // Handle group leave
   useEffect(() => {
-    const handleGroupLeft = ({ name }) => {
+    const handleGroupLeft = ({ name }: { name: string }) => {
       setGroups((prev) => prev.filter((g) => g.name !== name));
       setUnreadCounts((prev) => {
         const newCounts = { ...prev };
@@ -262,8 +305,9 @@ export default function ChatPage() {
     return () => socket.off("group_left", handleGroupLeft);
   }, [receiver, mode]);
 
+  // Handle typing indicators
   useEffect(() => {
-    const handleTyping = ({ username, from, group }) => {
+    const handleTyping = ({ username, from, group }: { username: string; from?: string; group?: string }) => {
       if (group && group === receiver && mode === "group") {
         setTypingUsers((prev) => ({ ...prev, [username]: group }));
       } else if (from && from === receiver && mode === "private") {
@@ -274,8 +318,9 @@ export default function ChatPage() {
     return () => socket.off("typing", handleTyping);
   }, [receiver, mode]);
 
+  // Handle stop typing
   useEffect(() => {
-    const handleStopTyping = ({ username, from, group }) => {
+    const handleStopTyping = ({ username, from, group }: { username: string; from?: string; group?: string }) => {
       setTypingUsers((prev) => {
         const newTyping = { ...prev };
         delete newTyping[username];
@@ -286,8 +331,10 @@ export default function ChatPage() {
     return () => socket.off("stop_typing", handleStopTyping);
   }, []);
 
+  // Compute displayed messages
   const displayedMessages = mode === "group" ? groupMessages[receiver] || [] : messages;
 
+  // Scroll to latest message and mark messages as seen
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     if (receiver) {
@@ -304,6 +351,7 @@ export default function ChatPage() {
     }
   }, [displayedMessages, receiver, mode]);
 
+  // Handle typing event
   const handleTyping = () => {
     if (!receiver) return;
     socket.emit("typing", {
@@ -323,6 +371,7 @@ export default function ChatPage() {
     }, 3000);
   };
 
+  // Send message
   const sendMessage = () => {
     if (!message.trim()) return;
     const timestamp = new Date();
@@ -347,6 +396,7 @@ export default function ChatPage() {
     }
   };
 
+  // Create a new group
   const createGroup = () => {
     if (!groupName || groupMembers.length < 2) return;
     const fullGroup = [...groupMembers, username];
@@ -365,32 +415,38 @@ export default function ChatPage() {
     setShowCreateGroup(false);
   };
 
+  // Leave a group
   const leaveGroup = () => {
     if (mode !== "group" || !receiver) return;
     socket.emit("leave_group", { group: receiver, username });
   };
 
-  const addMember = (newMember) => {
+  // Add a member to a group
+  const addMember = (newMember: string) => {
     if (mode !== "group" || !receiver || !activeGroupAdmins.includes(username)) return;
     socket.emit("add_member", { group: receiver, username: newMember, requester: username });
   };
 
-  const removeMember = (member) => {
+  // Remove a member from a group
+  const removeMember = (member: string) => {
     if (mode !== "group" || !receiver || !activeGroupAdmins.includes(username)) return;
     socket.emit("remove_member", { group: receiver, username: member, requester: username });
   };
 
-  const assignAdmin = (member) => {
+  // Assign admin role
+  const assignAdmin = (member: string) => {
     if (mode !== "group" || !receiver || !activeGroupAdmins.includes(username)) return;
     socket.emit("assign_admin", { group: receiver, username: member, requester: username });
   };
 
-  const removeAdmin = (member) => {
+  // Remove admin role
+  const removeAdmin = (member: string) => {
     if (mode !== "group" || !receiver || !activeGroupAdmins.includes(username)) return;
     socket.emit("remove_admin", { group: receiver, username: member, requester: username });
   };
 
-  const selectGroup = (group) => {
+  // Select a group for messaging
+  const selectGroup = (group: Group) => {
     setReceiver(group.name);
     setMode("group");
     setActiveGroupMembers(group.members);
@@ -405,7 +461,8 @@ export default function ChatPage() {
     }
   };
 
-  const selectPrivate = (user) => {
+  // Select a user for private messaging
+  const selectPrivate = (user: string) => {
     setReceiver(user);
     setMode("private");
     setMessages([]);
@@ -419,12 +476,12 @@ export default function ChatPage() {
     }
   };
 
+  // Filter users and groups with safeguard for searchTerm
   const filteredUsers = allUsers.filter((user) =>
-    user.toLowerCase().includes(searchTerm.toLowerCase())
+    user.toLowerCase().includes((searchTerm || "").toLowerCase())
   );
-
   const filteredGroups = groups.filter((group) =>
-    group.name.toLowerCase().includes(searchTerm.toLowerCase())
+    group.name.toLowerCase().includes((searchTerm || "").toLowerCase())
   );
 
   return (
@@ -456,8 +513,8 @@ export default function ChatPage() {
           allUsers={allUsers}
           createGroup={createGroup}
           username={username}
-          receiver={receiver} // Pass receiver prop
-          mode={mode} // Pass mode prop
+          receiver={receiver}
+          mode={mode}
         />
         <div className="flex flex-col flex-1">
           <ChatArea
