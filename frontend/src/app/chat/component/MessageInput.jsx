@@ -1,4 +1,9 @@
-export default function MessageInput({ message, setMessage, handleTyping, sendMessage }) {
+export default function MessageInput({
+  message,
+  setMessage,
+  sendMessage,
+  handleTyping,
+}) {
   return (
     <div className="bg-white p-3 border-t border-gray-200">
       <div className="flex items-center">
@@ -16,7 +21,7 @@ export default function MessageInput({ message, setMessage, handleTyping, sendMe
         </div>
         <button
           onClick={sendMessage}
-          className="ml-2 h-10 w-10 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="ml-2 h-10 w-10 bg-teal-600 text-white rounded-full flex items-center justify-center hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
           disabled={!message.trim()}
         >
           <svg
