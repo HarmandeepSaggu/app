@@ -99,7 +99,7 @@ export default function CreateGroupModal({
             <div className="text-sm font-medium text-gray-700">Contacts</div>
           </div>
           
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto max-h-[300px]"> {/* Added max-height for scrolling */}
             {allUsers.length === 0 ? (
               <div className="p-8 text-center text-gray-500">
                 <div className="text-sm">No contacts available</div>
