@@ -17,13 +17,13 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "*",
+    origin: "https://app-frontend-u0dt.onrender.com",
     methods: ["GET", "POST"],
   },
 });
 
 // Middleware
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(cors({ origin: "https://app-frontend-u0dt.onrender.com", credentials: true }));
 app.use(cookieParser());
 app.use(express.json());
 
