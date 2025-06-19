@@ -237,7 +237,7 @@ export default function LoginPage() {
       localStorage.setItem("username", data.username);
       localStorage.setItem("email", data.email);
       console.log("Login successful. Redirecting to /chat");
-      router.push("/");
+      router.push("/chat");
     } catch (err) {
       setError("Login failed. Please check your network or server.");
     } finally {
