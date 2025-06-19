@@ -1,3 +1,4 @@
+//sidebar
 "use client";
 import React from 'react';
 import CreateGroupModal from "./CreateGroupModal";
